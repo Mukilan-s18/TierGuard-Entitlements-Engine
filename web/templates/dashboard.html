@@ -401,7 +401,27 @@
                 <!-- Preferences Toolbar (Theme & Language) -->
                 <div class="flex flex-wrap items-center gap-2">
                     
-
+                    <!-- Language Selector Segmented Group -->
+                    <div class="tg-segmented inline-flex p-0.5 text-xs font-mono" role="group" aria-label="Language Selector">
+                        <button type="button" 
+                                onclick="setLanguage('en')" 
+                                id="lang-btn-en"
+                                class="px-2 py-1 font-semibold transition-colors">
+                            EN
+                        </button>
+                        <button type="button" 
+                                onclick="setLanguage('ta')" 
+                                id="lang-btn-ta"
+                                class="px-2 py-1 font-semibold transition-colors">
+                            தமிழ்
+                        </button>
+                        <button type="button" 
+                                onclick="setLanguage('hi')" 
+                                id="lang-btn-hi"
+                                class="px-2 py-1 font-semibold transition-colors">
+                            हिन्दी
+                        </button>
+                    </div>
 
 
                 </div>
