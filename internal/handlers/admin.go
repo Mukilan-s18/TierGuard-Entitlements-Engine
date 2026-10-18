@@ -64,6 +64,14 @@ func (h *AdminHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
+	// If requested via HTMX partial refresh (e.g. Refresh button), return ONLY the tenant-table partial
+	if r.Header.Get("HX-Request") == "true" {
+		if err := h.tmpl.ExecuteTemplate(w, "tenant-table", data); err != nil {
+			log.Printf("[AdminHandler] Error rendering tenant-table partial: %v", err)
+			http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		}
+		return
+	}
 
 	if err := h.tmpl.ExecuteTemplate(w, "dashboard", data); err != nil {
 		log.Printf("[AdminHandler] Error rendering dashboard template: %v", err)
