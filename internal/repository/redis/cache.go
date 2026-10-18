@@ -105,3 +105,84 @@ func (c *Cache) GetFeature(ctx context.Context, featureName string) (int, bool, 
 	}
 	return lvl, true, nil
 }
+
+// IncrementUsage increments the memory request counter in Redis.
+func (c *Cache) IncrementUsage(ctx context.Context, tenantID, month string) (int64, error) {
+	key := fmt.Sprintf("usage:%s:%s", tenantID, month)
+	return c.client.Incr(ctx, key).Result()
+}
+
+// IncrementUsageBy increments memory counter by delta.
+func (c *Cache) IncrementUsageBy(ctx context.Context, tenantID, month string, delta int64) (int64, error) {
+	key := fmt.Sprintf("usage:%s:%s", tenantID, month)
+	return c.client.IncrBy(ctx, key, delta).Result()
+}
+
+// GetUsage returns current monthly usage from Redis memory.
+func (c *Cache) GetUsage(ctx context.Context, tenantID, month string) (int, error) {
+	key := fmt.Sprintf("usage:%s:%s", tenantID, month)
+	val, err := c.client.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return 0, nil
+		}
+		return 0, err
+	}
+	count, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// SetUsage sets the usage counter in Redis memory.
+func (c *Cache) SetUsage(ctx context.Context, tenantID, month string, count int) error {
+	key := fmt.Sprintf("usage:%s:%s", tenantID, month)
+	return c.client.Set(ctx, key, count, 0).Err()
+}
+
+// AddUsageStreamEvent appends a usage increment event to a Redis Stream.
+func (c *Cache) AddUsageStreamEvent(ctx context.Context, streamName string, tenantID, month string, delta int64) (string, error) {
+	return c.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: streamName,
+		Values: map[string]interface{}{
+			"tenant_id": tenantID,
+			"month":     month,
+			"delta":     delta,
+			"timestamp": time.Now().UTC().Format(time.RFC3339Nano),
+		},
+	}).Result()
+}
+
+// IncrementUsageWithStream atomically increments the Redis memory counter and appends to Redis Streams.
+func (c *Cache) IncrementUsageWithStream(ctx context.Context, streamName, tenantID, month string, delta int64) (string, int64, error) {
+	pipe := c.client.TxPipeline()
+	key := fmt.Sprintf("usage:%s:%s", tenantID, month)
+	incrCmd := pipe.IncrBy(ctx, key, delta)
+	xaddCmd := pipe.XAdd(ctx, &redis.XAddArgs{
+		Stream: streamName,
+		Values: map[string]interface{}{
+			"tenant_id": tenantID,
+			"month":     month,
+			"delta":     delta,
+			"timestamp": time.Now().UTC().Format(time.RFC3339Nano),
+		},
+	})
+
+	if _, err := pipe.Exec(ctx); err != nil {
+		return "", 0, fmt.Errorf("redis stream pipeline failed: %w", err)
+	}
+
+	newCount := incrCmd.Val()
+	streamMsgID := xaddCmd.Val()
+	return streamMsgID, newCount, nil
+}
+
+// ReadStreamEntries reads recent entries from a Redis Stream for verification/consumption.
+func (c *Cache) ReadStreamEntries(ctx context.Context, streamName string, count int64) ([]redis.XMessage, error) {
+	streams, err := c.client.XRevRangeN(ctx, streamName, "+", "-", count).Result()
+	if err != nil {
+		return nil, err
+	}
+	return streams, nil
+}
