@@ -3,11 +3,11 @@ set -e
 
 ENDPOINT="http://localhost:8080/api/verify"
 TENANT_ID="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-FEATURE="export_reports"
+FEATURE="${1:-basic_analytics}"
 
 echo "=========================================================="
 echo "Simulating 100 requests for Tenant A ($TENANT_ID)..."
-echo "Feature: $FEATURE (Requires Pro tier)"
+echo "Feature: $FEATURE (Included in Free tier, Max Quota: 100)"
 echo "=========================================================="
 
 success_count=0
