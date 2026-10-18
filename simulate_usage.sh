@@ -30,7 +30,7 @@ for i in $(seq 1 100); do
 done
 
 echo ""
-echo "Summary of 100 test requests:"
+echo "Summary of first 100 requests:"
 echo "  Successful (HTTP 200): $success_count / 100"
 echo "  Failed:                $fail_count / 100"
 echo ""
