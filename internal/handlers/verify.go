@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"net/http"
+	"time"
 
 	"tierguard/internal/domain"
 	"tierguard/internal/service"
@@ -83,6 +86,17 @@ func (h *VerifyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 5. Request is valid: fire off a Go goroutine to increment usage count in Redis Streams asynchronously
+	go func(tenantID, month string) {
+		asyncCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		if _, _, err := h.redisSvc.IncrementTenantUsageStream(asyncCtx, tenantID, 1); err != nil {
+			log.Printf("[VerifyHandler] Async Redis Stream increment failed for tenant %s: %v", tenantID, err)
+		}
+	}(req.TenantID, month)
+
+	// Return HTTP 200 {"allowed": true} immediately without blocking on Redis Streams / DB
 	writeJSON(w, http.StatusOK, domain.VerifyResponse{
 		Allowed: true,
 	})
