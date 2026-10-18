@@ -69,6 +69,7 @@ func main() {
 	// Admin UI & HTMX endpoints
 	mux.HandleFunc("/admin", adminHandler.Dashboard)
 	mux.HandleFunc("/admin/update-tier", adminHandler.UpdateTier)
+	mux.HandleFunc("/admin/tenants/tier", adminHandler.UpdateTier)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
