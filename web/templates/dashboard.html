@@ -452,12 +452,22 @@
                 <!-- Health Status Badges -->
                 <div class="flex items-center gap-2 text-xs font-mono">
                     <div class="tg-status-pill flex items-center gap-1.5 px-2 py-1">
+                        {{if .RedisConnected}}
                         <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
                         <span data-i18n="status_redis">Redis Cache: Active (&lt;5ms)</span>
+                        {{else}}
+                        <span class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)] animate-pulse"></span>
+                        <span data-i18n="status_redis_disconnected">Redis Cache: Disconnected</span>
+                        {{end}}
                     </div>
                     <div class="tg-status-pill flex items-center gap-1.5 px-2 py-1">
+                        {{if .PostgresConnected}}
                         <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
                         <span data-i18n="status_postgres">PostgreSQL: Connected</span>
+                        {{else}}
+                        <span class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)] animate-pulse"></span>
+                        <span data-i18n="status_postgres_disconnected">PostgreSQL: Disconnected</span>
+                        {{end}}
                     </div>
                 </div>
 

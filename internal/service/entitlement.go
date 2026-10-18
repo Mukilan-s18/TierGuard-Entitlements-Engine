@@ -27,6 +27,29 @@ func NewEntitlementService(pgRepo *postgres.Repository, redisCache *redis.Cache)
 	}
 }
 
+// CheckHealth queries both PostgreSQL and Redis to verify active connectivity.
+func (s *EntitlementService) CheckHealth(ctx context.Context) (bool, bool) {
+	pgConnected := false
+	redisConnected := false
+
+	if s.pgRepo != nil {
+		pingCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		if err := s.pgRepo.Ping(pingCtx); err == nil {
+			pgConnected = true
+		}
+		cancel()
+	}
+
+	if s.redisCache != nil {
+		pingCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		if _, err := s.redisCache.Ping(pingCtx); err == nil {
+			redisConnected = true
+		}
+		cancel()
+	}
+
+	return pgConnected, redisConnected
+}
 
 // WarmUpCache loads tiers, features, tenants, and current month usage from Postgres into Redis on startup.
 func (s *EntitlementService) WarmUpCache(ctx context.Context) error {

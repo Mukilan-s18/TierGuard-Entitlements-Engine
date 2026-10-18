@@ -54,12 +54,14 @@ func (h *AdminHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pgConnected, redisConnected := h.entitlementService.CheckHealth(r.Context())
+
 	data := DashboardPageData{
 		Tenants:           tenants,
 		Tiers:             tiers,
 		LastUpdated:       time.Now().UTC().Format("15:04:05 UTC"),
-		PostgresConnected: true,
-		RedisConnected:    true,
+		PostgresConnected: pgConnected,
+		RedisConnected:    redisConnected,
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -179,13 +181,15 @@ func (h *AdminHandler) UpdateTier(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pgConnected, redisConnected := h.entitlementService.CheckHealth(ctx)
+
 	data := DashboardPageData{
 		Tenants:           updatedTenants,
 		Tiers:             updatedTiers,
 		SuccessMsg:        fmt.Sprintf("%s subscription tier updated to %s.", companyName, newTierName),
 		LastUpdated:       time.Now().UTC().Format("15:04:05 UTC"),
-		PostgresConnected: true,
-		RedisConnected:    true,
+		PostgresConnected: pgConnected,
+		RedisConnected:    redisConnected,
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
