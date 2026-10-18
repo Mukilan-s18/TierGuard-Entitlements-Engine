@@ -39,19 +39,19 @@ func main() {
 			ID:                 uuid.MustParse("11111111-1111-1111-1111-111111111111"),
 			Name:               "Free",
 			HierarchyLevel:     1,
-			MaxMonthlyRequests: 1000,
+			MaxMonthlyRequests: 100,
 		},
 		{
 			ID:                 uuid.MustParse("22222222-2222-2222-2222-222222222222"),
 			Name:               "Pro",
 			HierarchyLevel:     2,
-			MaxMonthlyRequests: 50000,
+			MaxMonthlyRequests: 10000,
 		},
 		{
 			ID:                 uuid.MustParse("33333333-3333-3333-3333-333333333333"),
 			Name:               "Enterprise",
 			HierarchyLevel:     3,
-			MaxMonthlyRequests: 1000000,
+			MaxMonthlyRequests: 100000,
 		},
 	}
 
@@ -93,8 +93,8 @@ func main() {
 		{
 			ID:          uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
 			CompanyName: "Acme Corp",
-			TierName:    "Pro",
-			UsageCount:  38450,
+			TierName:    "Free",
+			UsageCount:  0,
 		},
 		{
 			ID:          uuid.MustParse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
