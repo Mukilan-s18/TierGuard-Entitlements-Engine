@@ -41,6 +41,48 @@ func (h *VerifyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+
+	// 1. Check feature required tier level from Redis cache (NOT Postgres)
+	reqLevel, found, err := h.redisSvc.Cache().GetFeature(ctx, req.RequestedFeature)
+	if err != nil || !found {
+		writeJSON(w, http.StatusForbidden, domain.VerifyResponse{
+			Allowed: false,
+			Reason:  "quota_exceeded",
+		})
+		return
+	}
+
+	// 2. Check tenant and assigned tier from Redis cache (NOT Postgres)
+	cachedTenant, err := h.redisSvc.Cache().GetTenant(ctx, req.TenantID)
+	if err != nil || cachedTenant == nil {
+		writeJSON(w, http.StatusForbidden, domain.VerifyResponse{
+			Allowed: false,
+			Reason:  "quota_exceeded",
+		})
+		return
+	}
+
+	// 3. Verify tenant tier level meets required feature tier level
+	if cachedTenant.HierarchyLevel < reqLevel {
+		writeJSON(w, http.StatusForbidden, domain.VerifyResponse{
+			Allowed: false,
+			Reason:  "quota_exceeded",
+		})
+		return
+	}
+
+	// 4. Verify tenant has available quota in current month in Redis cache
+	month := domain.CurrentMonth()
+	currentUsage, err := h.redisSvc.Cache().GetUsage(ctx, req.TenantID, month)
+	if err != nil || currentUsage >= cachedTenant.MaxMonthlyRequests {
+		writeJSON(w, http.StatusForbidden, domain.VerifyResponse{
+			Allowed: false,
+			Reason:  "quota_exceeded",
+		})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, domain.VerifyResponse{
 		Allowed: true,
 	})
