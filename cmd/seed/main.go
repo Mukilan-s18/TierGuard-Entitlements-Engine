@@ -45,7 +45,7 @@ func main() {
 			ID:                 uuid.MustParse("22222222-2222-2222-2222-222222222222"),
 			Name:               "Pro",
 			HierarchyLevel:     2,
-			MaxMonthlyRequests: 100,
+			MaxMonthlyRequests: 50000,
 		},
 		{
 			ID:                 uuid.MustParse("33333333-3333-3333-3333-333333333333"),
