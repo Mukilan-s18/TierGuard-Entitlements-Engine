@@ -45,6 +45,13 @@ func (r *Repository) Close() {
 	}
 }
 
+// Ping checks if the PostgreSQL database connection is alive.
+func (r *Repository) Ping(ctx context.Context) error {
+	if r.pool == nil {
+		return fmt.Errorf("postgres pool is not initialized")
+	}
+	return r.pool.Ping(ctx)
+}
 
 // CreateTier inserts or updates a tier.
 func (r *Repository) UpsertTier(ctx context.Context, tier domain.Tier) (domain.Tier, error) {
