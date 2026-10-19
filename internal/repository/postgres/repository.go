@@ -206,6 +206,17 @@ func (r *Repository) UpdateTenantTier(ctx context.Context, tenantID, tierID uuid
 	return nil
 }
 
+func (r *Repository) UpdateTenant(ctx context.Context, tenantID uuid.UUID, companyName string, tierID uuid.UUID) error {
+	cmdTag, err := r.pool.Exec(ctx, `UPDATE tenants SET company_name = $1, tier_id = $2 WHERE id = $3`, companyName, tierID, tenantID)
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("tenant not found: %s", tenantID)
+	}
+	return nil
+}
+
 func (r *Repository) IncrementUsage(ctx context.Context, tenantID uuid.UUID, month string, count int) error {
 	query := `
 		INSERT INTO usage_logs (id, tenant_id, request_count, month)

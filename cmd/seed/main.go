@@ -11,6 +11,7 @@ import (
 
 	"tierguard/internal/domain"
 	"tierguard/internal/repository/postgres"
+	"tierguard/internal/repository/redis"
 )
 
 func getEnv(key, fallback string) string {
@@ -22,6 +23,7 @@ func getEnv(key, fallback string) string {
 
 func main() {
 	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/tierguard?sslmode=disable")
+	redisURL := getEnv("REDIS_URL", "redis://localhost:6379")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -92,33 +94,33 @@ func main() {
 	seeds := []TenantSeed{
 		{
 			ID:          uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-			CompanyName: "Acme Corp",
+			CompanyName: "Tenant A",
 			TierName:    "Free",
-			UsageCount:  0,
+			UsageCount:  0, // Clean baseline for live demo simulation
 		},
 		{
 			ID:          uuid.MustParse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
 			CompanyName: "Starlight Labs",
 			TierName:    "Free",
-			UsageCount:  850,
+			UsageCount:  85, // 85% Warning threshold
 		},
 		{
 			ID:          uuid.MustParse("88888888-8888-8888-8888-888888888888"),
 			CompanyName: "Startup Inc",
 			TierName:    "Free",
-			UsageCount:  420,
+			UsageCount:  105, // Quota exceeded threshold
 		},
 		{
 			ID:          uuid.MustParse("77777777-7777-7777-7777-777777777777"),
 			CompanyName: "Basecamp Digital",
 			TierName:    "Pro",
-			UsageCount:  50000,
+			UsageCount:  3850, // 38% Normal healthy Pro tier
 		},
 		{
 			ID:          uuid.MustParse("99999999-9999-9999-9999-999999999999"),
 			CompanyName: "Mega Enterprises",
 			TierName:    "Enterprise",
-			UsageCount:  642800,
+			UsageCount:  64280, // 64% Normal healthy Enterprise tier
 		},
 	}
 
@@ -137,12 +139,39 @@ func main() {
 			}
 			fmt.Printf("  Created Tenant: %s (Tier: %s)\n", s.CompanyName, s.TierName)
 		} else {
-			_ = repo.UpdateTenantTier(ctx, s.ID, tier.ID)
+			_ = repo.UpdateTenant(ctx, s.ID, s.CompanyName, tier.ID)
 			fmt.Printf("  Updated Tenant: %s (Tier: %s)\n", s.CompanyName, s.TierName)
 		}
 
-		// Reset and set current month usage
+		// Reset and set current month usage in PostgreSQL
 		_ = repo.SetUsage(ctx, s.ID, currentMonth, s.UsageCount)
+	}
+
+	// Directly synchronize Redis cache so database and memory counters are immediately aligned
+	log.Println("[Seed] Syncing Redis in-memory cache...")
+	cache, err := redis.NewCache(redisURL)
+	if err != nil {
+		log.Printf("[Seed] Warning: failed to connect to Redis: %v", err)
+	} else {
+		defer cache.Close()
+
+		for _, f := range mockFeatures {
+			_ = cache.SetFeature(ctx, f.Name, f.RequiredTierLevel)
+		}
+
+		for _, s := range seeds {
+			tier := tierMap[s.TierName]
+			cached := domain.CachedTenantData{
+				TenantID:           s.ID.String(),
+				TierID:             tier.ID.String(),
+				TierName:           tier.Name,
+				HierarchyLevel:     tier.HierarchyLevel,
+				MaxMonthlyRequests: tier.MaxMonthlyRequests,
+			}
+			_ = cache.SetTenant(ctx, cached)
+			_ = cache.SetUsage(ctx, s.ID.String(), currentMonth, s.UsageCount)
+		}
+		log.Println("[Seed] Redis cache synced successfully.")
 	}
 
 	log.Println("[Seed] Database seeding completed.")
