@@ -106,9 +106,9 @@ func main() {
 		},
 		{
 			ID:          uuid.MustParse("88888888-8888-8888-8888-888888888888"),
-			CompanyName: "Startup Inc",
+			CompanyName: "Acme Corp",
 			TierName:    "Free",
-			UsageCount:  105, // Quota exceeded threshold
+			UsageCount:  200, // Exceeded quota demonstration
 		},
 		{
 			ID:          uuid.MustParse("77777777-7777-7777-7777-777777777777"),
