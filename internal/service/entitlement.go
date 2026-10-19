@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"sync"
 	"time"
 
@@ -248,6 +249,21 @@ func (s *EntitlementService) GetDashboardData(ctx context.Context) ([]domain.Ten
 			}
 		}
 	}
+
+	// Order by usage limit hit: exceeded on top, followed by highest % usage
+	sort.SliceStable(tenants, func(i, j int) bool {
+		var ratioI, ratioJ float64
+		if tenants[i].MaxMonthlyRequests > 0 {
+			ratioI = float64(tenants[i].CurrentUsage) / float64(tenants[i].MaxMonthlyRequests)
+		}
+		if tenants[j].MaxMonthlyRequests > 0 {
+			ratioJ = float64(tenants[j].CurrentUsage) / float64(tenants[j].MaxMonthlyRequests)
+		}
+		if ratioI != ratioJ {
+			return ratioI > ratioJ
+		}
+		return tenants[i].CompanyName < tenants[j].CompanyName
+	})
 
 	tiers, err := s.pgRepo.GetAllTiers(ctx)
 	if err != nil {

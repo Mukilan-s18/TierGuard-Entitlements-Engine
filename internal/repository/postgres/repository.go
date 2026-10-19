@@ -281,7 +281,7 @@ func (r *Repository) GetDashboardView(ctx context.Context, month string) ([]doma
 		FROM tenants t
 		JOIN tiers tr ON t.tier_id = tr.id
 		LEFT JOIN usage_logs u ON t.id = u.tenant_id AND u.month = $1
-		ORDER BY CASE WHEN t.company_name = 'Acme Corp' THEN 0 ELSE 1 END, tr.hierarchy_level DESC, t.company_name ASC
+		ORDER BY (COALESCE(u.request_count, 0)::float / NULLIF(tr.max_monthly_requests, 0)::float) DESC NULLS LAST, t.company_name ASC
 	`
 	rows, err := r.pool.Query(ctx, query, month)
 	if err != nil {
