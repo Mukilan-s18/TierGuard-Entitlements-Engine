@@ -93,22 +93,16 @@ func main() {
 
 	seeds := []TenantSeed{
 		{
-			ID:          uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-			CompanyName: "Tenant A",
-			TierName:    "Free",
-			UsageCount:  0, // Clean baseline for live demo simulation
-		},
-		{
-			ID:          uuid.MustParse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-			CompanyName: "Starlight Labs",
-			TierName:    "Free",
-			UsageCount:  85, // 85% Warning threshold
-		},
-		{
 			ID:          uuid.MustParse("88888888-8888-8888-8888-888888888888"),
 			CompanyName: "Acme Corp",
 			TierName:    "Free",
-			UsageCount:  200, // Exceeded quota demonstration
+			UsageCount:  200, // Exceeded quota demonstration (Row 1)
+		},
+		{
+			ID:          uuid.MustParse("99999999-9999-9999-9999-999999999999"),
+			CompanyName: "Mega Enterprises",
+			TierName:    "Enterprise",
+			UsageCount:  64280, // 64% Normal healthy Enterprise tier
 		},
 		{
 			ID:          uuid.MustParse("77777777-7777-7777-7777-777777777777"),
@@ -117,10 +111,16 @@ func main() {
 			UsageCount:  3850, // 38% Normal healthy Pro tier
 		},
 		{
-			ID:          uuid.MustParse("99999999-9999-9999-9999-999999999999"),
-			CompanyName: "Mega Enterprises",
-			TierName:    "Enterprise",
-			UsageCount:  64280, // 64% Normal healthy Enterprise tier
+			ID:          uuid.MustParse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+			CompanyName: "Starlight Labs",
+			TierName:    "Free",
+			UsageCount:  85, // 85% Warning threshold
+		},
+		{
+			ID:          uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+			CompanyName: "Tenant A",
+			TierName:    "Free",
+			UsageCount:  0, // Clean baseline for live demo simulation
 		},
 	}
 
